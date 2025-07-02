@@ -6,10 +6,21 @@ from typing import TypeVar, Generic, Type
 
 import numpy as np
 
+# Reduce / fold
+from functools import reduce
+import operator
+
 """
 Get the tensor type (vector, matrix, tensor3, tensor4 or tensor5)
 """
-def _get_tensor(data_type, rank, shape):
+def _get_tensor(data_type, rank, shape, data = "auto"):
+  if data == None:
+    return None
+  if data != "auto":
+    assert(data_type == data.data_type())
+    # TODO Check rank
+    assert(data.size() == reduce(operator.mul, shape))
+    return data
   if rank == 1:
     if data_type == dtype.dfloat:
       return backend.vector_float(shape)
@@ -48,17 +59,36 @@ def _get_tensor(data_type, rank, shape):
   else:
     raise RuntimeError("tensor support only up to 5 dimensions.")
 
+def _make_tuple_shape(dims):
+  if isinstance(dims, int):
+    return (dims)
+  else:
+    return tuple(dims)
+
+
+def _to_numpy_data_type(data_type):
+  if data_type == dtype.dfloat:
+    return np.float32
+  elif data_type == dtype.ddouble:
+    return np.float64
+  else:
+    raise RuntimeError("Data type not supported.")
+
 """
 Create a tensor from rank, shape and data type
 """
 class tensor(object):
 
-  def __init__(self, rank, dims, data_type = dtype.dfloat):
-    assert(rank >0 and rank <= 5)
-    self.rank = rank
-    self.dims = dims
+  def __init__(self, dims_rank, dims, data_type = dtype.dfloat, data = "auto"):
+    assert(dims_rank >0 and dims_rank <= 5)
+    self.dims_rank = dims_rank
+    self.dims = _make_tuple_shape(dims)
     self.data_type = data_type
-    self.t = _get_tensor(data_type, rank, dims)
+    #assert(data == "auto" or data == None)
+    self.t = _get_tensor(data_type, dims_rank, self.dims, data)
+
+  def rank(self):
+    return self.dims_rank
 
   def size(self):
     return self.t.size()
@@ -81,45 +111,95 @@ class tensor(object):
   def set(self, *index_and_value):
     self.t.set(*index_and_value)
 
+  def __add__(self, other):
+    assert(self.rank() == other.rank())
+    assert(self.size() == other.size())
+    c = (self.t + other.t).eval()
+    return tensor(self.rank(), self.dims, c.data_type(), c)
+
+  def __sub__(self, other):
+    assert(self.rank() == other.rank())
+    assert(self.size() == other.size())
+    c = (self.t - other.t).eval()
+    return tensor(self.rank(), self.dims, c.data_type(), c)
+
+  def __mul__(self, other):
+    c = (self.t * other.t).eval()
+    if self.rank() == 1 and other.rank() == 1:
+      return tensor(self.rank(), self.dims, c.data_type(), c)
+    elif self.rank() == 2 and other.rank() == 1:
+      return tensor(other.rank(), (self.dims[0]), c.data_type(), c)
+    elif self.rank() == 2 and other.rank() == 2:
+      return tensor(self.rank(), (self.dims[0], other.dims[1]), c.data_type(), c)
+    else:
+      raise RuntimeError("Multiplication not supported.")
+
+  def __truediv__(self, other):
+    assert(self.rank() == other.rank())
+    assert(self.size() == other.size())
+    c = (self.t / other.t).eval()
+    return tensor(self.rank(), self.dims, c.data_type(), c)
+
+  def __matmul__(self, other):
+    return self.__mul__(self, other)
+
   def __repr__(self):
     return repr(self.t)
 
   def copy(self):
-    s = tensor(self.rank, self.dims, self.data_type)
-    for i in range(self.shape().size()):
-      s[i] = self.t[i]
-    return s
+    return tensor(self.dims_rank, self.dims, self.data_type,
+      self.t.copy())
 
   """
   Convert to numpy ndarray
   """
   def numpy(self):
-    if self.dims is int:
-      dims = [self.dims]
-    else:
-      dims = self.dims
-    array = np.zeros(dims)
+    np_data_type = _to_numpy_data_type(self.data_type)
+    array = np.zeros(self.dims, dtype = np_data_type)
     size = self.shape().size()
-    if rank == 1:
+    if self.dims_rank == 1:
       # Vector
       for k in range(size):
         array[k] = self.t[k]
-    elif rank == 2:
+    elif self.dims_rank == 2:
       # Matrix
       rows = self.shape().dim(0)
       cols = self.shape().dim(1)
       for i in range(rows):
         for j in range(cols):
-          array[rows, cols] = self.t(rows, cols)
-    elif rank == 3:
-      # TODO 3d tensor
-      pass
-    elif rank == 4
-      # TODO 4d tensor
-      pass
+          array[i, j] = self.t(i, j)
+    elif self.dims_rank == 3:
+      # 3d tensor
+      I = self.shape().dim(0)
+      J = self.shape().dim(1)
+      K = self.shape().dim(2)
+      for i in range(I):
+        for j in range(J):
+          for k in range(K):
+            array[i, j, k] = self.t(i, j, k)
+    elif self.dims_rank == 4:
+      # 4d tensor
+      I = self.shape().dim(0)
+      J = self.shape().dim(1)
+      K = self.shape().dim(2)
+      L = self.shape().dim(3)
+      for i in range(I):
+        for j in range(J):
+          for k in range(K):
+            for l in range(L):
+              array[i, j, k, l] = self.t(i, j, k, l)
     else:
-      pass
-      # TODO 5d tensor
+      I = self.shape().dim(0)
+      J = self.shape().dim(1)
+      K = self.shape().dim(2)
+      L = self.shape().dim(3)
+      M = self.shape().dim(4)
+      for i in range(I):
+        for j in range(J):
+          for k in range(K):
+            for l in range(L):
+              for m in range(M):
+                array[i, j, k, l, m] = self.t(i, j, k, l, m)
     return array
 
 """
