@@ -2,8 +2,6 @@ import tenseurbackend as backend
 
 from tenseurbackend import data_type as dtype
 
-from typing import TypeVar, Generic, Type
-
 import numpy as np
 
 # Reduce / fold
@@ -22,37 +20,37 @@ def _get_tensor(data_type, rank, shape, data = "auto"):
     assert(data.size() == reduce(operator.mul, shape))
     return data
   if rank == 1:
-    if data_type == dtype.dfloat:
+    if data_type == dtype.float32:
       return backend.vector_float(shape[0])
-    elif data_type == dtype.ddouble:
+    elif data_type == dtype.float64:
       return backend.vector_double(shape[0])
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 2:
-    if data_type == dtype.dfloat:
+    if data_type == dtype.float32:
       return backend.matrix_float(shape[0], shape[1])
-    elif data_type == dtype.ddouble:
+    elif data_type == dtype.float64:
       return backend.matrix_double(shape[0], shape[1])
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 3:
-    if data_type == dtype.dfloat:
+    if data_type == dtype.float32:
       return backend.tensor3_float(shape[0], shape[1], shape[2])
-    elif data_type == dtype.ddouble:
+    elif data_type == dtype.float64:
       return backend.tensor3_double(shape[0], shape[1], shape[2])
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 4:
-    if data_type == dtype.dfloat:
+    if data_type == dtype.float32:
       return backend.tensor4_float(shape[0], shape[1], shape[2], shape[3])
-    elif data_type == dtype.ddouble:
+    elif data_type == dtype.float64:
       return backend.tensor4_double(shape[0], shape[1], shape[2], shape[3])
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 5:
-    if data_type == dtype.dfloat:
+    if data_type == dtype.float32:
       return backend.tensor5_float(shape[0], shape[1], shape[2], shape[3], shape[4])
-    elif data_type == dtype.ddouble:
+    elif data_type == dtype.float64:
       return backend.tensor5_double(shape[0], shape[1], shape[2], shape[3], shape[4])
     else:
       raise RuntimeError("Data type not yet supported.")
@@ -67,9 +65,9 @@ def _make_tuple_shape(dims):
 
 
 def _to_numpy_data_type(data_type):
-  if data_type == dtype.dfloat:
+  if data_type == dtype.float32:
     return np.float32
-  elif data_type == dtype.ddouble:
+  elif data_type == dtype.float64:
     return np.float64
   else:
     raise RuntimeError("Data type not supported.")
@@ -79,7 +77,7 @@ Create a tensor from rank, shape and data type
 """
 class tensor(object):
 
-  def __init__(self, dims_rank, dims, data_type = dtype.dfloat, data = "auto"):
+  def __init__(self, dims_rank, dims, data_type = dtype.float32, data = "auto"):
     assert(dims_rank >0 and dims_rank <= 5)
     self.dims_rank = dims_rank
     self.dims = _make_tuple_shape(dims)
@@ -205,12 +203,12 @@ class tensor(object):
 """
 Create a vector from shape and optional data type
 """
-def vector(dims, data_type = dtype.dfloat):
+def vector(dims, data_type = dtype.float32):
   return tensor(1, dims, data_type)
 
 """
 Create a matrix from shape and optional data type
 """
-def matrix(dims, data_type = dtype.dfloat):
+def matrix(dims, data_type = dtype.float32):
   return tensor(2, dims, data_type)
 
