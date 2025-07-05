@@ -23,9 +23,9 @@ def _get_tensor(data_type, rank, shape, data = "auto"):
     return data
   if rank == 1:
     if data_type == dtype.dfloat:
-      return backend.vector_float(shape)
+      return backend.vector_float(shape[0])
     elif data_type == dtype.ddouble:
-      return backend.vector_double(shape)
+      return backend.vector_double(shape[0])
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 2:
@@ -61,7 +61,7 @@ def _get_tensor(data_type, rank, shape, data = "auto"):
 
 def _make_tuple_shape(dims):
   if isinstance(dims, int):
-    return (dims)
+    return tuple([dims])
   else:
     return tuple(dims)
 
@@ -141,7 +141,7 @@ class tensor(object):
     return tensor(self.rank(), self.dims, c.data_type(), c)
 
   def __matmul__(self, other):
-    return self.__mul__(self, other)
+    return self.__mul__(other)
 
   def __repr__(self):
     return repr(self.t)
