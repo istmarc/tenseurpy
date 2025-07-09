@@ -1,6 +1,7 @@
 import tenseurbackend as backend
 
 from tenseurbackend import data_type as dtype
+from tenseurbackend import vector_shape, matrix_shape, tensor3_shape, tensor4_shape, tensor5_shape
 
 import numpy as np
 
@@ -113,22 +114,22 @@ class tensor(object):
     assert(self.rank() == other.rank())
     assert(self.size() == other.size())
     c = (self.t + other.t).eval()
-    return tensor(self.rank(), self.dims, c.data_type(), c)
+    return tensor(self.dims, c.data_type(), c)
 
   def __sub__(self, other):
     assert(self.rank() == other.rank())
     assert(self.size() == other.size())
     c = (self.t - other.t).eval()
-    return tensor(self.rank(), self.dims, c.data_type(), c)
+    return tensor(self.dims, c.data_type(), c)
 
   def __mul__(self, other):
     c = (self.t * other.t).eval()
     if self.rank() == 1 and other.rank() == 1:
-      return tensor(self.rank(), self.dims, c.data_type(), c)
+      return tensor(self.dims, c.data_type(), c)
     elif self.rank() == 2 and other.rank() == 1:
-      return tensor(other.rank(), (self.dims[0]), c.data_type(), c)
+      return tensor((self.dims[0]), c.data_type(), c)
     elif self.rank() == 2 and other.rank() == 2:
-      return tensor(self.rank(), (self.dims[0], other.dims[1]), c.data_type(), c)
+      return tensor((self.dims[0], other.dims[1]), c.data_type(), c)
     else:
       raise RuntimeError("Multiplication not supported.")
 
@@ -136,7 +137,7 @@ class tensor(object):
     assert(self.rank() == other.rank())
     assert(self.size() == other.size())
     c = (self.t / other.t).eval()
-    return tensor(self.rank(), self.dims, c.data_type(), c)
+    return tensor(self.dims, c.data_type(), c)
 
   def __matmul__(self, other):
     return self.__mul__(other)
@@ -145,8 +146,7 @@ class tensor(object):
     return repr(self.t)
 
   def copy(self):
-    return tensor(self.dims_rank, self.dims, self.data_type,
-      self.t.copy())
+    return tensor(self.dims, self.data_type, self.t.copy())
 
   """
   Convert to numpy ndarray
@@ -214,4 +214,45 @@ def matrix(rows, cols, data_type = dtype.float32):
   assert(isinstance(rows, int))
   assert(isinstance(cols, int))
   return tensor((rows, cols), data_type)
+
+def ones(dims, data_type = dtype.float32):
+  shape = _make_tuple_shape(dims)
+  rank = len(shape)
+  if rank == 1:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.ones_vector_float(vector_shape(dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.ones_vector_double(vector_shape(dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 2:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.ones_matrix_float(matrix_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.ones_matrix_double(matrix_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 3:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.ones_tensor3_float(tensor3_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.ones_tensor3_double(tensor3_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 4:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.ones_tensor4_float(tensor4_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.ones_tensor4_double(tensor4_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 5:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.ones_tensor5_float(tensor5_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.ones_tensor5_double(tensor5_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  else:
+    raise RuntimeError(f"Tensor of rank {rank} not supported.")
 
