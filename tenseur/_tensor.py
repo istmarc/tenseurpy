@@ -77,13 +77,13 @@ Create a tensor from rank, shape and data type
 """
 class tensor(object):
 
-  def __init__(self, dims_rank, dims, data_type = dtype.float32, data = "auto"):
-    assert(dims_rank >0 and dims_rank <= 5)
-    self.dims_rank = dims_rank
+  def __init__(self, dims, data_type = dtype.float32, data = "auto"):
     self.dims = _make_tuple_shape(dims)
+    self.dims_rank = len(self.dims)
+    assert(self.dims_rank >0 and self.dims_rank <= 5)
     self.data_type = data_type
     #assert(data == "auto" or data == None)
-    self.t = _get_tensor(data_type, dims_rank, self.dims, data)
+    self.t = _get_tensor(data_type, self.dims_rank, self.dims, data)
 
   def rank(self):
     return self.dims_rank
@@ -203,12 +203,15 @@ class tensor(object):
 """
 Create a vector from shape and optional data type
 """
-def vector(dims, data_type = dtype.float32):
-  return tensor(1, dims, data_type)
+def vector(size, data_type = dtype.float32):
+  assert(isinstance(size, int))
+  return tensor(size, data_type)
 
 """
 Create a matrix from shape and optional data type
 """
-def matrix(dims, data_type = dtype.float32):
-  return tensor(2, dims, data_type)
+def matrix(rows, cols, data_type = dtype.float32):
+  assert(isinstance(rows, int))
+  assert(isinstance(cols, int))
+  return tensor((rows, cols), data_type)
 
