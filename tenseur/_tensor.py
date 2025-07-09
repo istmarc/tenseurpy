@@ -215,6 +215,48 @@ def matrix(rows, cols, data_type = dtype.float32):
   assert(isinstance(cols, int))
   return tensor((rows, cols), data_type)
 
+
+def zeros(dims, data_type = dtype.float32):
+  shape = _make_tuple_shape(dims)
+  rank = len(shape)
+  if rank == 1:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.zeros_vector_float(vector_shape(dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.zeros_vector_double(vector_shape(dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 2:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.zeros_matrix_float(matrix_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.zeros_matrix_double(matrix_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 3:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.zeros_tensor3_float(tensor3_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.zeros_tensor3_double(tensor3_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 4:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.zeros_tensor4_float(tensor4_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.zeros_tensor4_double(tensor4_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 5:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.zeros_tensor5_float(tensor5_shape(*dims)))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.zeros_tensor5_double(tensor5_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  else:
+    raise RuntimeError(f"Tensor of rank {rank} not supported.")
+
 def ones(dims, data_type = dtype.float32):
   shape = _make_tuple_shape(dims)
   rank = len(shape)
@@ -251,6 +293,88 @@ def ones(dims, data_type = dtype.float32):
       return tensor(shape, data_type, backend.ones_tensor5_float(tensor5_shape(*dims)))
     if data_type == dtype.dfloat64:
       return tensor(shape, data_type, backend.ones_tensor5_double(tensor5_shape(*dims)))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  else:
+    raise RuntimeError(f"Tensor of rank {rank} not supported.")
+
+def fill(dims, value, data_type = dtype.float32):
+  shape = _make_tuple_shape(dims)
+  rank = len(shape)
+  if rank == 1:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.fill_vector_float(vector_shape(dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.fill_vector_double(vector_shape(dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 2:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.fill_matrix_float(matrix_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.fill_matrix_double(matrix_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 3:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.fill_tensor3_float(tensor3_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.fill_tensor3_double(tensor3_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 4:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.fill_tensor4_float(tensor4_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.fill_tensor4_double(tensor4_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 5:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.fill_tensor5_float(tensor5_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.fill_tensor5_double(tensor5_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  else:
+    raise RuntimeError(f"Tensor of rank {rank} not supported.")
+
+def range(dims, value = 0., data_type = dtype.float32):
+  shape = _make_tuple_shape(dims)
+  rank = len(shape)
+  if rank == 1:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.range_vector_float(vector_shape(dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.range_vector_double(vector_shape(dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 2:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.range_matrix_float(matrix_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.range_matrix_double(matrix_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 3:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.range_tensor3_float(tensor3_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.range_tensor3_double(tensor3_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 4:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.range_tensor4_float(tensor4_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.range_tensor4_double(tensor4_shape(*dims), value))
+    else:
+      raise RuntimeError("Data type not yet supported.")
+  if rank == 5:
+    if data_type == dtype.float32:
+      return tensor(shape, data_type, backend.range_tensor5_float(tensor5_shape(*dims), value))
+    if data_type == dtype.dfloat64:
+      return tensor(shape, data_type, backend.range_tensor5_double(tensor5_shape(*dims), value))
     else:
       raise RuntimeError("Data type not yet supported.")
   else:
