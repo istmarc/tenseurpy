@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import tenseurbackend as backend
 
 from tenseurbackend import data_type as dtype
@@ -64,6 +66,13 @@ def _make_tuple_shape(dims):
   else:
     return tuple(dims)
 
+def _from_numpy_data_type(data_type):
+  if data_type == np.float32:
+    return dtype.float32
+  elif data_type == np.float64:
+    return dtype.float64
+  else:
+    raise RuntimeError("Data type not supported.")
 
 def _to_numpy_data_type(data_type):
   if data_type == dtype.float32:
@@ -74,7 +83,7 @@ def _to_numpy_data_type(data_type):
     raise RuntimeError("Data type not supported.")
 
 """
-Create a tensor from rank, shape and data type
+Create a tensor from shape (rank) and data type
 """
 class tensor(object):
 
@@ -85,6 +94,12 @@ class tensor(object):
     self.data_type = data_type
     #assert(data == "auto" or data == None)
     self.t = _get_tensor(data_type, self.dims_rank, self.dims, data)
+
+  def dtype(self):
+    return self.data_type
+
+  def data(self):
+    return self.t
 
   def rank(self):
     return self.dims_rank
@@ -99,6 +114,8 @@ class tensor(object):
     return self.t.strides()
 
   def __getitem__(self, index):
+    if index >= self.size():
+      raise StopIteration()
     return self.t[index]
 
   def __setitem__(self, index, value):
@@ -214,6 +231,63 @@ def matrix(rows, cols, data_type = dtype.float32):
   assert(isinstance(rows, int))
   assert(isinstance(cols, int))
   return tensor((rows, cols), data_type)
+
+"""
+Create a tensor from a numpy array
+"""
+def from_numpy(array):
+  shape = array.shape
+  data_type = _from_numpy_data_type(array.dtype)
+  t = tensor(shape, data_type)
+  size = t.size()
+  rank = len(shape)
+  if rank == 1:
+    # Vector
+    for k in range(size):
+      t[k] = array[k]
+  elif rank == 2:
+    # Matrix
+    rows = shape[0]
+    cols = shape[1]
+    for i in range(rows):
+      for j in range(cols):
+        t.set(i, j, array[i, j])
+  elif rank == 3:
+    # 3d tensor
+    I = shape[0]
+    J = shape[1]
+    K = shape[2]
+    for i in range(I):
+      for j in range(J):
+        for k in range(K):
+          t.set(i, j, k, array[i, j, k])
+  elif rank == 4:
+    # 4d tensor
+    I = shape[0]
+    J = shape[1]
+    K = shape[2]
+    L = shape[3]
+    for i in range(I):
+      for j in range(J):
+        for k in range(K):
+          for l in range(L):
+            t.set(i, j, k, l, array[i, j, k, l])
+  elif rank == 5:
+    I = shape[0]
+    J = shape[1]
+    K = shape[2]
+    L = shape[3]
+    M = shape[4]
+    for i in range(I):
+      for j in range(J):
+        for k in range(K):
+          for l in range(L):
+            for m in range(M):
+              t.set(i, j, k, l, m, array[i, j, k, l, m])
+  else:
+    raise RuntimeError("Array rank not supported, only up to 5d are supported.")
+  return t
+
 
 
 def zeros(dims, data_type = dtype.float32):
@@ -339,7 +413,7 @@ def fill(dims, value, data_type = dtype.float32):
   else:
     raise RuntimeError(f"Tensor of rank {rank} not supported.")
 
-def range(dims, value = 0., data_type = dtype.float32):
+def arange(dims, value = 0., data_type = dtype.float32):
   shape = _make_tuple_shape(dims)
   rank = len(shape)
   if rank == 1:
@@ -377,6 +451,23 @@ def range(dims, value = 0., data_type = dtype.float32):
       return tensor(shape, data_type, backend.range_tensor5_double(tensor5_shape(*dims), value))
     else:
       raise RuntimeError("Data type not yet supported.")
+  else:
+    raise RuntimeError(f"Tensor of rank {rank} not supported.")
+
+
+"""
+Save to a binary file
+"""
+def save(ten, filename):
+  rank = ten.rank()
+  data_type = ten.dtype()
+  if rank == 1:
+    if data_type == dtype.float32:
+      backend.save_vector_float(ten.data(), filename)
+    elif data_type == dtype.float64:
+      backend.save_vector_double(ten.data(), filename)
+    else:
+      raise RuntimeError("Saving data type not yet supported.")
   else:
     raise RuntimeError(f"Tensor of rank {rank} not supported.")
 
