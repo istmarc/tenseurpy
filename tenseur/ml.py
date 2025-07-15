@@ -11,9 +11,15 @@ def histogram(x: tensor, standartize = False, cumulative = False, nbins = 0):
   assert(rank == 1)
   size = x.size()
   data_type = x.dtype()
-  if (data_type == dtype.float32):
+  if data_type == dtype.float32:
     options = backend.histogram_options(standartize, cumulative, nbins)
     h = backend.histogram_float(options)
+    h.fit(x.data())
+    hist, bins = h.hist()
+    return tensor(hist.size(), data_type, hist), tensor(bins.size(), data_type, bins)
+  elif data_type == dtype.float64:
+    options = backend.histogram_options(standartize, cumulative, nbins)
+    h = backend.histogram_double(options)
     h.fit(x.data())
     hist, bins = h.hist()
     return tensor(hist.size(), data_type, hist), tensor(bins.size(), data_type, bins)
