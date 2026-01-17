@@ -14,7 +14,7 @@ import operator
 """
 Get the tensor type (vector, matrix, tensor3, tensor4 or tensor5)
 """
-def _get_tensor(data_type, rank, shape, data = "auto"):
+def _get_tensor(data_type, rank, shape, requires_grad, data = "auto"):
   if data == None:
     return None
   if data != "auto":
@@ -24,37 +24,37 @@ def _get_tensor(data_type, rank, shape, data = "auto"):
     return data
   if rank == 1:
     if data_type == dtype.float32:
-      return backend.vector_float(shape[0])
+      return backend.vector_float(vector_shape(shape[0]), requires_grad)
     elif data_type == dtype.float64:
-      return backend.vector_double(shape[0])
+      return backend.vector_double(vector_shape(shape[0]), requires_grad)
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 2:
     if data_type == dtype.float32:
-      return backend.matrix_float(shape[0], shape[1])
+      return backend.matrix_float(matrix_shape(shape[0], shape[1]), requires_grad)
     elif data_type == dtype.float64:
-      return backend.matrix_double(shape[0], shape[1])
+      return backend.matrix_double(matrix_shape(shape[0], shape[1]), requires_grad)
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 3:
     if data_type == dtype.float32:
-      return backend.tensor3_float(shape[0], shape[1], shape[2])
+      return backend.tensor3_float(tensor3_shape(shape[0], shape[1], shape[2]), requires_grad)
     elif data_type == dtype.float64:
-      return backend.tensor3_double(shape[0], shape[1], shape[2])
+      return backend.tensor3_double(tensor3_shape(shape[0], shape[1], shape[2]), requires_grad)
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 4:
     if data_type == dtype.float32:
-      return backend.tensor4_float(shape[0], shape[1], shape[2], shape[3])
+      return backend.tensor4_float(tensor4_shape(shape[0], shape[1], shape[2], shape[3]), requires_grad)
     elif data_type == dtype.float64:
-      return backend.tensor4_double(shape[0], shape[1], shape[2], shape[3])
+      return backend.tensor4_double(tensor4_shape(shape[0], shape[1], shape[2], shape[3]), requires_grad)
     else:
       raise RuntimeError("Data type not yet supported.")
   elif rank == 5:
     if data_type == dtype.float32:
-      return backend.tensor5_float(shape[0], shape[1], shape[2], shape[3], shape[4])
+      return backend.tensor5_float(tensor5_shape(shape[0], shape[1], shape[2], shape[3], shape[4]), requires_grad)
     elif data_type == dtype.float64:
-      return backend.tensor5_double(shape[0], shape[1], shape[2], shape[3], shape[4])
+      return backend.tensor5_double(tensor5_shape(shape[0], shape[1], shape[2], shape[3], shape[4]), requires_grad)
     else:
       raise RuntimeError("Data type not yet supported.")
   else:
@@ -83,17 +83,22 @@ def _to_numpy_data_type(data_type):
     raise RuntimeError("Data type not supported.")
 
 """
-Create a tensor from shape (rank) and data type
+Create a tensor with optional gradient information from shape (rank) and data type
 """
 class tensor(object):
 
-  def __init__(self, dims, data_type = dtype.float32, data = "auto"):
+  """
+    tensor(dims, requires_grad, data_type, data = "auto")
+    Create a tensor with optional gradient information
+  """
+  def __init__(self, dims, requires_grad = False, data_type = dtype.float32, data = "auto"):
     self.dims = _make_tuple_shape(dims)
+    self.requires_grad = requires_grad
     self.dims_rank = len(self.dims)
     assert(self.dims_rank >0 and self.dims_rank <= 5)
     self.data_type = data_type
     #assert(data == "auto" or data == None)
-    self.t = _get_tensor(data_type, self.dims_rank, self.dims, data)
+    self.t = _get_tensor(data_type, self.dims_rank, self.dims, requires_grad, data)
 
   def dtype(self):
     return self.data_type
@@ -113,10 +118,19 @@ class tensor(object):
   def strides(self):
     return self.t.strides()
 
+  def requires_grad(self):
+    return self.t.requires_grad()
+
+  def grad(self):
+    return self.t.grad();
+
   def __getitem__(self, index):
-    if index >= self.size():
-      raise StopIteration()
-    return self.t[index]
+    if (isinstance(index, int)):
+      if index >= self.size():
+        raise StopIteration()
+      return self.t[index]
+    else:
+      return self.t[index]
 
   def __setitem__(self, index, value):
     self.t.__setitem__(index, value)
@@ -130,31 +144,20 @@ class tensor(object):
   def __add__(self, other):
     assert(self.rank() == other.rank())
     assert(self.size() == other.size())
-    c = (self.t + other.t).eval()
-    return tensor(self.dims, c.data_type(), c)
+    return self.t + other.t
 
   def __sub__(self, other):
     assert(self.rank() == other.rank())
     assert(self.size() == other.size())
-    c = (self.t - other.t).eval()
-    return tensor(self.dims, c.data_type(), c)
+    return self.t - other.t
 
   def __mul__(self, other):
-    c = (self.t * other.t).eval()
-    if self.rank() == 1 and other.rank() == 1:
-      return tensor(self.dims, c.data_type(), c)
-    elif self.rank() == 2 and other.rank() == 1:
-      return tensor((self.dims[0]), c.data_type(), c)
-    elif self.rank() == 2 and other.rank() == 2:
-      return tensor((self.dims[0], other.dims[1]), c.data_type(), c)
-    else:
-      raise RuntimeError("Multiplication not supported.")
+    return self.t * other.t
 
   def __truediv__(self, other):
     assert(self.rank() == other.rank())
     assert(self.size() == other.size())
-    c = (self.t / other.t).eval()
-    return tensor(self.dims, c.data_type(), c)
+    return self.t / other.t
 
   def __matmul__(self, other):
     return self.__mul__(other)
@@ -162,8 +165,9 @@ class tensor(object):
   def __repr__(self):
     return repr(self.t)
 
+  # FIXME Copy gradient info, to see on the backend
   def copy(self):
-    return tensor(self.dims, self.data_type, self.t.copy())
+    return tensor(self.dims, self.requires_grad, self.data_type, self.t.copy())
 
   """
   Convert to numpy ndarray
@@ -220,25 +224,25 @@ class tensor(object):
 """
 Create a vector from shape and optional data type
 """
-def vector(size, data_type = dtype.float32):
+def vector(size, requires_grad = False, data_type = dtype.float32):
   assert(isinstance(size, int))
-  return tensor(size, data_type)
+  return tensor((size), requires_grad, data_type)
 
 """
 Create a matrix from shape and optional data type
 """
-def matrix(rows, cols, data_type = dtype.float32):
+def matrix(rows, cols, requires_grad = False, data_type = dtype.float32):
   assert(isinstance(rows, int))
   assert(isinstance(cols, int))
-  return tensor((rows, cols), data_type)
+  return tensor((rows, cols), requires_grad, data_type)
 
 """
 Create a tensor from a numpy array
 """
-def from_numpy(array):
+def from_numpy(array, requires_grad = False):
   shape = array.shape
   data_type = _from_numpy_data_type(array.dtype)
-  t = tensor(shape, data_type)
+  t = tensor(shape, requires_grad, data_type)
   size = t.size()
   rank = len(shape)
   if rank == 1:

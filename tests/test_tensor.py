@@ -10,9 +10,13 @@ class VectorTest(unittest.TestCase):
     self.n = 10
     self.x = ten.vector(self.n)
     self.y = ten.vector(self.n)
+    for i in range(self.n):
+      self.x[i] = i + 1;
+      self.y[i] = i + 1;
 
   def test_add(self):
     z = self.x + self.y
+    z = z.eval()
     a = self.x.numpy()
     b = self.y.numpy()
     c = a + b
@@ -21,6 +25,7 @@ class VectorTest(unittest.TestCase):
 
   def test_sub(self):
     z = self.x - self.y
+    z = z.eval()
     a = self.x.numpy()
     b = self.y.numpy()
     c = a - b
@@ -29,6 +34,7 @@ class VectorTest(unittest.TestCase):
 
   def test_mul(self):
     z = self.x * self.y
+    z = z.eval()
     a = self.x.numpy()
     b = self.y.numpy()
     c = a * b
@@ -37,6 +43,7 @@ class VectorTest(unittest.TestCase):
 
   def test_div(self):
     z = self.x / self.y
+    z = z.eval()
     a = self.x.numpy()
     b = self.y.numpy()
     c = a / b
