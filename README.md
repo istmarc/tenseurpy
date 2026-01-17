@@ -29,7 +29,7 @@ Build and install tenseur from source on [https://github.com/istmarc/tenseur](ht
 
 ```shell
 mkdir build-bindings
-cd build-docs
+cd build-bindings
 cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_PYTHON=ON
 cmake --build . --
 sudo make install
