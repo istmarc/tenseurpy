@@ -25,7 +25,7 @@ print(z.eval())
 
 ## How to install
 
-Build and install tenseur from source on [](https://github.com/istmarc/tenseur).
+Build and install tenseur from source on [https://github.com/istmarc/tenseur](https://github.com/istmarc/tenseur).
 
 ```shell
 mkdir build-bindings
